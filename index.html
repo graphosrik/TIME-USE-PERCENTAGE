@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Growth Calculator · Full</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+    background: #f1f5f9; color: #0f172a; padding: 1.2rem; line-height: 1.5;
+  }
+  .app { max-width: 1600px; margin: 0 auto; }
+  h1 { font-weight: 600; font-size: 1.85rem; display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.25rem;}
+  h1 small { font-size:0.82rem; font-weight:400; background:#dbeafe; color:#1e40af; padding:0.2rem 0.9rem; border-radius:30px;}
+  .subhead { color:#475569; margin-bottom:1rem; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:0.5rem; font-size:0.92rem;}
+  .date-badge { background:white; padding:0.3rem 1.2rem; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,0.05); font-size:0.85rem;}
+  .dashboard { display:grid; grid-template-columns: 1fr 1fr; gap:1.1rem; margin-bottom:1.1rem;}
+  @media (max-width:1100px) { .dashboard { grid-template-columns: 1fr; } }
+  .card { background:white; border-radius:22px; padding:1.3rem; box-shadow:0 8px 24px rgba(0,0,0,0.02), 0 2px 8px rgba(0,0,0,0.04); border:1px solid #e9eef4; }
+  .card h2 { font-size:1.1rem; font-weight:600; margin-bottom:0.7rem; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;}
+  .card h3 { font-size:0.92rem; font-weight:600; margin:0.85rem 0 0.4rem; color:#1e293b;}
+  .btn { background:#2563eb; color:white; border:none; padding:0.5rem 1.05rem; border-radius:40px; font-weight:500; font-size:0.82rem; cursor:pointer; transition:0.15s; display:inline-flex; align-items:center; gap:0.35rem; box-shadow:0 2px 6px rgba(37,99,235,0.2);}
+  .btn:hover { background:#1d4ed8; transform:translateY(-1px);}
+  .btn-secondary { background:white; color:#1e293b; border:1px solid #cbd5e1; box-shadow:none;}
+  .btn-secondary:hover { background:#f8fafc; transform:none;}
+  .btn-sm { padding:0.32rem 0.8rem; font-size:0.75rem;}
+  .btn-icon { background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1rem; padding:0.2rem 0.45rem; border-radius:8px; transition:0.1s;}
+  .btn-icon:hover { background:#fee2e2; color:#ef4444;}
+  .status-msg { font-size:0.78rem; color:#16a34a; margin-left:0.4rem; font-weight:500;}
+  .week-grid { display:grid; grid-template-columns: repeat(7, 1fr); gap:0.32rem; margin:0.7rem 0;}
+  .day-column { background:#f8fafc; border-radius:11px; padding:0.45rem 0.28rem; border:1px solid #e2e8f0; text-align:center; cursor:pointer; transition:0.1s;}
+  .day-column.active { background:#dbeafe; border-color:#2563eb; box-shadow:0 0 0 1px #2563eb;}
+  .day-column .day-name { font-weight:600; font-size:0.7rem; text-transform:uppercase; color:#475569; margin-bottom:0.15rem;}
+  .day-column .day-preview { font-size:0.63rem; color:#64748b; min-height:2.2rem; line-height:1.2;}
+  .routine-item { background:#f8fafc; padding:0.5rem 0.7rem; border-radius:13px; border:1px solid #e2e8f0; margin-bottom:0.4rem;}
+  .routine-item .top-row { display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;}
+  .routine-item input[type="text"] { flex:2; background:transparent; border:none; font-weight:600; padding:0.2rem 0; font-size:0.87rem; color:#0f172a; outline:none; min-width:60px;}
+  .routine-item input[type="time"] { padding:0.25rem; border-radius:8px; border:1px solid #cbd5e1; font-size:0.75rem; background:white;}
+  .time-sep { color:#94a3b8; font-size:0.78rem;}
+  .block-tag { background:#e0e7ff; color:#3730a3; font-size:0.62rem; padding:0.1rem 0.5rem; border-radius:20px; font-weight:600;}
+  .session-block { background:white; border-radius:15px; border:1px solid #e2e8f0; padding:0.7rem; margin-bottom:0.6rem; box-shadow:0 1px 4px rgba(0,0,0,0.02);}
+  .session-block-header { display:flex; justify-content:space-between; align-items:center; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.5rem;}
+  .session-block-title { font-weight:600; font-size:0.87rem; color:#1e293b; display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;}
+  .total-badge { font-size:0.7rem; font-weight:600; color:#1e40af; background:#dbeafe; padding:0.12rem 0.55rem; border-radius:20px;}
+  .slot-row { display:flex; align-items:center; gap:0.35rem; background:#f8fafc; border-radius:10px; padding:0.3rem 0.5rem; margin-bottom:0.3rem; flex-wrap:wrap;}
+  .slot-row input[type="text"] { flex:2; min-width:90px; padding:0.3rem 0.55rem; border-radius:8px; border:1px solid #cbd5e1; font-size:0.8rem;}
+  .slot-row input[type="time"] { padding:0.3rem; border-radius:8px; border:1px solid #cbd5e1; font-size:0.72rem;}
+  .slot-duration { font-size:0.7rem; font-weight:600; color:#1e293b; background:#e2e8f0; padding:0.12rem 0.5rem; border-radius:20px; min-width:44px; text-align:center;}
+  .slot-color-dot { width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .add-slot-btn { font-size:0.7rem; padding:0.25rem 0.65rem; border-radius:20px; border:1px dashed #94a3b8; background:transparent; color:#475569; cursor:pointer; margin-top:0.15rem; font-weight:500;}
+  .add-slot-btn:hover { background:#f1f5f9; border-color:#2563eb; color:#2563eb;}
+  .flex-row { display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; margin-top:0.45rem;}
+  .divider { border:none; border-top:1px solid #e9eef4; margin:0.9rem 0;}
+  .view-tabs { display:flex; gap:0.35rem; background:#f1f5f9; padding:0.25rem; border-radius:40px; margin-bottom:0.7rem;}
+  .view-tab { flex:1; text-align:center; padding:0.42rem 0.35rem; border-radius:30px; font-weight:500; font-size:0.78rem; cursor:pointer; transition:0.1s; background:transparent; border:none; color:#475569;}
+  .view-tab.active { background:white; color:#0f172a; box-shadow:0 2px 8px rgba(0,0,0,0.04); font-weight:600;}
+  .chart-container { position:relative; height:290px; width:100%; margin-top:0.3rem;}
+  .stats-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:0.55rem; margin-top:0.85rem;}
+  .stat-item { background:#f8fafc; border-radius:12px; padding:0.6rem 0.35rem; text-align:center;}
+  .stat-value { font-size:1.25rem; font-weight:700; color:#1e293b; line-height:1.15;}
+  .stat-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.4px; color:#64748b; font-weight:500;}
+  .date-picker-row { display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap; margin-bottom:0.45rem;}
+  input[type="date"] { padding:0.38rem 0.75rem; border-radius:40px; border:1px solid #cbd5e1; font-family:inherit; font-size:0.8rem; background:white;}
+  .muted { color:#64748b; font-size:0.8rem;}
+  .footer-note { font-size:0.75rem; color:#94a3b8; margin-top:1rem; text-align:center;}
+  .legend-list { display:flex; flex-wrap:wrap; gap:0.35rem 0.75rem; margin-top:0.45rem; font-size:0.72rem; color:#475569;}
+  .legend-item { display:flex; align-items:center; gap:0.28rem;}
+  .legend-swatch { width:11px; height:11px; border-radius:3px;}
+  .empty-hint { padding:0.55rem; color:#94a3b8; font-size:0.78rem; font-style:italic;}
+  .pie-wrap { display:flex; gap:0.9rem; flex-wrap:wrap; align-items:flex-start;}
+  .pie-canvas-wrap { flex:1 1 440px; min-width:380px; height:480px; position:relative;}
+  .pie-legend { flex:1 1 240px; min-width:220px; font-size:0.78rem; line-height:1.65;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>📚 Study Growth Calculator <small>routine · nested subjects · charts · PDF routiner</small></h1>
+  <div class="subhead">
+    <span>Plan weekly blocks, log real subjects inside each block, and see your growth — day, week, month, year.</span>
+    <span class="date-badge" id="todayDisplay"></span>
+  </div>
+
+  <div class="dashboard">
+    <div class="card">
+      <h2>📋 Weekly routine planner</h2>
+      <p class="muted" style="margin-bottom:0.5rem;">Click a day to set its routine. Each block has a name and time range.</p>
+      <div class="week-grid" id="weekGrid"></div>
+
+      <h3>✏️ Blocks for <span id="selectedDayName">Monday</span></h3>
+      <div id="routineEditor"></div>
+      <div class="flex-row">
+        <button class="btn btn-secondary btn-sm" id="addRoutineItemBtn">+ Add block</button>
+        <button class="btn btn-sm" id="saveRoutineBtn">💾 Save routine</button>
+        <span id="routineStatus" class="status-msg"></span>
+      </div>
+
+      <hr class="divider">
+
+      <h2>⏱️ Daily work log</h2>
+      <div class="date-picker-row">
+        <label style="font-size:0.82rem;">Date:</label>
+        <input type="date" id="sessionDatePicker">
+        <button class="btn btn-secondary btn-sm" id="loadSessionsBtn">Load</button>
+        <button class="btn btn-secondary btn-sm" id="resetToRoutineBtn" title="Recreate blocks from assigned routine">↻ Use routine</button>
+        <span class="muted" style="font-size:0.75rem;" id="weekdayLabel"></span>
+      </div>
+      <div id="sessionLogContainer"></div>
+      <div class="flex-row">
+        <button class="btn btn-sm" id="saveSessionsBtn">💾 Save today's log</button>
+        <span id="sessionStatus" class="status-msg"></span>
+      </div>
+      <p class="muted" style="margin-top:0.4rem; font-size:0.75rem;">
+        💡 Inside each block, add slots for the actual subjects studied.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>📈 Growth chart <span class="muted" style="font-weight:400; font-size:0.82rem;">(by actual subject)</span></h2>
+      <div class="view-tabs" id="viewTabs">
+        <button class="view-tab active" data-view="day">Day</button>
+        <button class="view-tab" data-view="week">Week</button>
+        <button class="view-tab" data-view="month">Month</button>
+        <button class="view-tab" data-view="year">Year</button>
+      </div>
+      <div class="date-picker-row" id="rangePickerRow"></div>
+      <div class="chart-container"><canvas id="growthChart"></canvas></div>
+      <div class="legend-list" id="legendList"></div>
+      <div class="stats-grid">
+        <div class="stat-item"><div class="stat-value" id="statTotalHours">0h</div><div class="stat-label">Total hours</div></div>
+        <div class="stat-item"><div class="stat-value" id="statSubjects">0</div><div class="stat-label">Subjects</div></div>
+        <div class="stat-item"><div class="stat-value" id="statDays">0</div><div class="stat-label">Days tracked</div></div>
+        <div class="stat-item"><div class="stat-value" id="statAvgPerDay">0h</div><div class="stat-label">Avg / day</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.1rem;">
+    <h2>🥧 Routine block utilisation <span class="muted" style="font-weight:400; font-size:0.82rem;">(assigned vs actually studied)</span></h2>
+    <div class="view-tabs" id="pieViewTabs" style="max-width:500px;">
+      <button class="view-tab active" data-pie-view="day">Day</button>
+      <button class="view-tab" data-pie-view="week">Week</button>
+      <button class="view-tab" data-pie-view="month">Month</button>
+      <button class="view-tab" data-pie-view="year">Year</button>
+    </div>
+    <div class="date-picker-row">
+      <label style="font-size:0.82rem;">Anchor date:</label>
+      <input type="date" id="pieDatePicker">
+      <span class="muted" style="font-size:0.75rem;">(Day = that day · Week = last 7 · Month = last 30 · Year = last 12 months)</span>
+    </div>
+    <div class="pie-wrap">
+      <div class="pie-canvas-wrap">
+        <canvas id="routinePieChart"></canvas>
+      </div>
+      <div class="pie-legend" id="pieLegend"></div>
+    </div>
+    <p class="muted" style="margin-top:0.5rem; font-size:0.75rem;">
+      <strong>Outer ring</strong> = unique routine block names (total assigned time across the selected view).
+      <strong>Inner ring</strong> = subjects you actually studied + unused time (light shade).
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>📄 Routiner <span class="muted" style="font-weight:400; font-size:0.82rem;">(your PDF reference)</span></h2>
+    <div class="date-picker-row">
+      <input type="file" id="pdfUploadInput" accept="application/pdf" style="font-size:0.82rem;">
+      <button class="btn btn-sm" id="pdfSaveBtn">💾 Save PDF</button>
+      <button class="btn btn-secondary btn-sm" id="pdfRemoveBtn">🗑 Remove</button>
+      <span id="pdfStatus" class="status-msg"></span>
+    </div>
+    <div id="pdfViewerWrap" style="margin-top:0.7rem; display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; flex-wrap:wrap; gap:0.4rem;">
+        <span class="muted" id="pdfFileName" style="font-size:0.82rem;"></span>
+        <a id="pdfDownloadLink" class="btn btn-secondary btn-sm" download>⬇ Download</a>
+      </div>
+      <iframe id="pdfViewer" style="width:100%; height:600px; border:1px solid #e2e8f0; border-radius:14px;" src=""></iframe>
+    </div>
+    <div id="pdfEmptyHint" class="muted" style="font-size:0.82rem; padding:0.4rem 0;">
+      No PDF uploaded yet. Choose a file above and click "Save PDF".
+    </div>
+  </div>
+
+  <div class="footer-note">⚡ All data saved locally (localStorage + IndexedDB).</div>
+</div>
+
+<script>
+(function(){
+  const ROUTINE_KEY  = 'study_nested_routine_v1';
+  const SESSIONS_KEY = 'study_nested_sessions_v1';
+
+  const DEFAULT_ROUTINE = {
+    Monday: [
+      { id: 'mon_ss',   name: 'Self Study',  startTime: '07:30', endTime: '09:30' },
+      { id: 'mon_math', name: 'Mathematics', startTime: '10:00', endTime: '11:30' }
+    ],
+    Tuesday:   [ { id: 'tue_ss', name: 'Self Study', startTime: '07:30', endTime: '09:30' } ],
+    Wednesday: [ { id: 'wed_ss', name: 'Self Study', startTime: '07:30', endTime: '09:30' },
+                 { id: 'wed_ad', name: 'Adda',       startTime: '17:00', endTime: '19:00' } ],
+    Thursday:  [ { id: 'thu_ss', name: 'Self Study', startTime: '07:30', endTime: '09:30' } ],
+    Friday:    [ { id: 'fri_ss', name: 'Self Study', startTime: '07:30', endTime: '09:30' } ],
+    Saturday:  [ { id: 'sat_ss', name: 'Self Study', startTime: '09:00', endTime: '11:00' } ],
+    Sunday:    []
+  };
+
+  let routine = {};
+  let sessions = {};
+  let currentView = 'day';
+  let selectedRoutineDay = 'Monday';
+  let selectedSessionDate = new Date().toISOString().slice(0,10);
+  let selectedViewDate = new Date().toISOString().slice(0,10);
+  let chart = null;
+
+  const $ = id => document.getElementById(id);
+  const weekGrid = $('weekGrid');
+  const routineEditor = $('routineEditor');
+  const addRoutineItemBtn = $('addRoutineItemBtn');
+  const saveRoutineBtn = $('saveRoutineBtn');
+  const routineStatus = $('routineStatus');
+  const selectedDayNameSpan = $('selectedDayName');
+  const sessionDatePicker = $('sessionDatePicker');
+  const loadSessionsBtn = $('loadSessionsBtn');
+  const resetToRoutineBtn = $('resetToRoutineBtn');
+  const sessionLogContainer = $('sessionLogContainer');
+  const saveSessionsBtn = $('saveSessionsBtn');
+  const sessionStatus = $('sessionStatus');
+  const weekdayLabel = $('weekdayLabel');
+  const viewTabs = $('viewTabs');
+  const rangePickerRow = $('rangePickerRow');
+  const ctx = $('growthChart').getContext('2d');
+  const legendList = $('legendList');
+  const statTotalHours = $('statTotalHours');
+  const statSubjects = $('statSubjects');
+  const statDays = $('statDays');
+  const statAvgPerDay = $('statAvgPerDay');
+
+  const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const formatDate = d => {
+    const dt = new Date(d);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  };
+  const getWeekdayName = ds => DAYS[(new Date(ds + 'T00:00:00').getDay() + 6) % 7];
+  const timeToMin = t => { if(!t) return 0; const [h,m]=t.split(':').map(Number); return h*60+(m||0); };
+  const minToHours = m => (m/60).toFixed(2);
+  const dur = (s,e) => Math.max(0, timeToMin(e) - timeToMin(s));
+  const uid = p => p + Date.now() + Math.random().toString(36).slice(2,7);
+
+  const colorCache = {};
+  function colorFor(name, alpha=1, lighten=false){
+    const key = name + '|' + (lighten ? 'l' : 'n');
+    if(!colorCache[key]){
+      let h = 0; for(let i=0;i<name.length;i++) h = name.charCodeAt(i) + ((h<<5)-h);
+      const hue = (h*137) % 360;
+      const sat = lighten ? 55 : 68;
+      const light = lighten ? 82 : 52;
+      colorCache[key] = `hsl(${hue}, ${sat}%, ${light}%)`;
+    }
+    if(alpha === 1) return colorCache[key];
+    const p = colorCache[key].match(/\d+/g);
+    return `hsla(${p[0]}, ${p[1]}%, ${p[2]}%, ${alpha})`;
+  }
+
+  function load(){
+    try {
+      const r = localStorage.getItem(ROUTINE_KEY);
+      routine = r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_ROUTINE));
+      const s = localStorage.getItem(SESSIONS_KEY);
+      sessions = s ? JSON.parse(s) : {};
+    } catch(e){
+      routine = JSON.parse(JSON.stringify(DEFAULT_ROUTINE));
+      sessions = {};
+    }
+    DAYS.forEach(d => { if(!routine[d]) routine[d] = []; });
+  }
+  const saveRoutine = () => localStorage.setItem(ROUTINE_KEY, JSON.stringify(routine));
+  const saveSessions = () => localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+
+  function normalizeDay(dateStr){
+    if(!sessions[dateStr]) { sessions[dateStr] = { blocks: [] }; return; }
+    if(Array.isArray(sessions[dateStr])) {
+      sessions[dateStr] = { blocks: sessions[dateStr].map(b => ({
+        id: b.id || uid('b_'), name: b.name || 'Block',
+        startTime: b.startTime || '09:00', endTime: b.endTime || '10:00',
+        slots: []
+      })) };
+    }
+    if(!sessions[dateStr].blocks) sessions[dateStr].blocks = [];
+    sessions[dateStr].blocks.forEach(b => { if(!b.slots) b.slots = []; });
+  }
+
+  function renderWeekGrid(){
+    weekGrid.innerHTML = '';
+    DAYS.forEach(day => {
+      const col = document.createElement('div');
+      col.className = 'day-column' + (day === selectedRoutineDay ? ' active' : '');
+      const items = routine[day] || [];
+      const preview = items.length ? items.map(i => i.name).join(' · ') : '—';
+      col.innerHTML = `
+        <div class="day-name">${day.slice(0,3)}</div>
+        <div class="day-preview">${preview.length > 22 ? preview.slice(0,20)+'…' : preview}</div>
+      `;
+      col.onclick = () => {
+        selectedRoutineDay = day;
+        renderWeekGrid(); renderRoutineEditor();
+        selectedDayNameSpan.textContent = day;
+      };
+      weekGrid.appendChild(col);
+    });
+  }
+
+  function renderRoutineEditor(){
+    const list = routine[selectedRoutineDay] || [];
+    routineEditor.innerHTML = '';
+    if(list.length === 0){
+      routineEditor.innerHTML = '<div class="empty-hint">No blocks yet. Add one.</div>';
+    }
+    list.forEach((b) => {
+      const div = document.createElement('div');
+      div.className = 'routine-item';
+      div.innerHTML = `
+        <div class="top-row">
+          <span class="block-tag">BLOCK</span>
+          <input type="text" value="${(b.name||'').replace(/"/g,'&quot;')}" data-id="${b.id}" data-field="name" placeholder="Block name">
+          <input type="time" value="${b.startTime||'09:00'}" data-id="${b.id}" data-field="startTime">
+          <span class="time-sep">→</span>
+          <input type="time" value="${b.endTime||'10:00'}" data-id="${b.id}" data-field="endTime">
+          <button class="btn-icon" data-id="${b.id}" title="Remove">✕</button>
+        </div>
+      `;
+      div.querySelector('.btn-icon').onclick = e => {
+        const id = e.currentTarget.dataset.id;
+        routine[selectedRoutineDay] = routine[selectedRoutineDay].filter(x => x.id !== id);
+        renderRoutineEditor(); renderWeekGrid();
+      };
+      div.querySelectorAll('input').forEach(inp => {
+        inp.onchange = e => {
+          const id = e.target.dataset.id;
+          const field = e.target.dataset.field;
+          const rec = routine[selectedRoutineDay].find(x => x.id === id);
+          if(rec) rec[field] = e.target.value;
+        };
+      });
+      routineEditor.appendChild(div);
+    });
+  }
+
+  function renderSessionLog(dateStr){
+    selectedSessionDate = dateStr;
+    normalizeDay(dateStr);
+    const day = sessions[dateStr];
+    const weekday = getWeekdayName(dateStr);
+    weekdayLabel.textContent = `(${weekday})`;
+    sessionLogContainer.innerHTML = '';
+
+    if(day.blocks.length === 0){
+      sessionLogContainer.innerHTML = '<div class="empty-hint">No blocks for this day yet. Click "↻ Use routine" or add manually below.</div>';
+    }
+
+    day.blocks.forEach(block => {
+      const blockDiv = document.createElement('div');
+      blockDiv.className = 'session-block';
+      const totalMin = block.slots.reduce((s, sl) => s + dur(sl.startTime, sl.endTime), 0);
+
+      blockDiv.innerHTML = `
+        <div class="session-block-header">
+          <div class="session-block-title">
+            <span class="block-tag">BLOCK</span>
+            <input type="text" value="${(block.name||'').replace(/"/g,'&quot;')}" data-block-id="${block.id}" data-block-field="name"
+                   style="background:transparent;border:none;font-weight:600;font-size:0.87rem;padding:0.2rem 0;min-width:80px;outline:none;">
+            <input type="time" value="${block.startTime||'09:00'}" data-block-id="${block.id}" data-block-field="startTime"
+                   style="padding:0.22rem;border-radius:8px;border:1px solid #cbd5e1;font-size:0.7rem;">
+            <span class="time-sep">→</span>
+            <input type="time" value="${block.endTime||'10:00'}" data-block-id="${block.id}" data-block-field="endTime"
+                   style="padding:0.22rem;border-radius:8px;border:1px solid #cbd5e1;font-size:0.7rem;">
+          </div>
+          <div style="display:flex; gap:0.3rem; align-items:center;">
+            <span class="total-badge">Total: ${minToHours(totalMin)}h</span>
+            <button class="btn-icon" data-block-id="${block.id}" title="Remove block">✕</button>
+          </div>
+        </div>
+        <div class="slots-container"></div>
+        <button class="add-slot-btn" data-block-id="${block.id}">+ Add subject slot</button>
+      `;
+
+      blockDiv.querySelector('.btn-icon').onclick = e => {
+        const id = e.currentTarget.dataset.blockId;
+        day.blocks = day.blocks.filter(b => b.id !== id);
+        saveSessions(); renderSessionLog(dateStr); refreshAll();
+      };
+      blockDiv.querySelectorAll('input[data-block-field]').forEach(inp => {
+        inp.onchange = e => {
+          const id = e.target.dataset.blockId;
+          const f = e.target.dataset.blockField;
+          const rec = day.blocks.find(b => b.id === id);
+          if(rec){ rec[f] = e.target.value; saveSessions(); refreshAll(); }
+        };
+      });
+
+      const slotsContainer = blockDiv.querySelector('.slots-container');
+      block.slots.forEach(slot => {
+        const slotRow = document.createElement('div');
+        slotRow.className = 'slot-row';
+        const d = dur(slot.startTime, slot.endTime);
+        slotRow.innerHTML = `
+          <span class="slot-color-dot" style="background:${colorFor(slot.name||'Untitled')}"></span>
+          <input type="text" value="${(slot.name||'').replace(/"/g,'&quot;')}" data-slot-id="${slot.id}" data-slot-field="name" placeholder="What did you study?">
+          <input type="time" value="${slot.startTime||'07:30'}" data-slot-id="${slot.id}" data-slot-field="startTime">
+          <span class="time-sep">→</span>
+          <input type="time" value="${slot.endTime||'08:30'}" data-slot-id="${slot.id}" data-slot-field="endTime">
+          <span class="slot-duration">${minToHours(d)}h</span>
+          <button class="btn-icon" data-slot-id="${slot.id}" title="Remove slot">✕</button>
+        `;
+        slotRow.querySelector('.btn-icon').onclick = e => {
+          const sid = e.currentTarget.dataset.slotId;
+          block.slots = block.slots.filter(s => s.id !== sid);
+          saveSessions(); renderSessionLog(dateStr); refreshAll();
+        };
+        slotRow.querySelectorAll('input[data-slot-field]').forEach(inp => {
+          inp.onchange = e => {
+            const sid = e.target.dataset.slotId;
+            const f = e.target.dataset.slotField;
+            const rec = block.slots.find(s => s.id === sid);
+            if(rec){
+              rec[f] = e.target.value; saveSessions();
+              if(f === 'name') slotRow.querySelector('.slot-color-dot').style.background = colorFor(rec.name || 'Untitled');
+              if(f === 'startTime' || f === 'endTime') slotRow.querySelector('.slot-duration').textContent = minToHours(dur(rec.startTime, rec.endTime)) + 'h';
+              refreshAll();
+            }
+          };
+        });
+        slotsContainer.appendChild(slotRow);
+      });
+
+      blockDiv.querySelector('.add-slot-btn').onclick = e => {
+        const bid = e.currentTarget.dataset.blockId;
+        const blk = day.blocks.find(b => b.id === bid);
+        if(!blk) return;
+        const start = blk.startTime || '07:30';
+        const endMin = Math.min(timeToMin(start) + 60, 23*60 + 59);
+        const end = String(Math.floor(endMin/60)).padStart(2,'0') + ':' + String(endMin%60).padStart(2,'0');
+        blk.slots.push({ id: uid('sl_'), name: '', startTime: start, endTime: end });
+        saveSessions(); renderSessionLog(dateStr); refreshAll();
+      };
+
+      sessionLogContainer.appendChild(blockDiv);
+    });
+
+    const addBlockBtn = document.createElement('button');
+    addBlockBtn.className = 'btn btn-secondary btn-sm';
+    addBlockBtn.style.marginTop = '0.25rem';
+    addBlockBtn.textContent = '+ Add manual block';
+    addBlockBtn.onclick = () => {
+      day.blocks.push({ id: uid('b_'), name: 'New block', startTime: '09:00', endTime: '10:00', slots: [] });
+      saveSessions(); renderSessionLog(dateStr); refreshAll();
+    };
+    sessionLogContainer.appendChild(addBlockBtn);
+  }
+
+  function applyRoutineToDate(dateStr){
+    const weekday = getWeekdayName(dateStr);
+    const blocks = (routine[weekday] || []).map(b => ({
+      id: b.id + '_' + uid('x_'),
+      name: b.name, startTime: b.startTime, endTime: b.endTime,
+      slots: []
+    }));
+    sessions[dateStr] = { blocks };
+    saveSessions(); renderSessionLog(dateStr); refreshAll();
+  }
+
+  function buildChart(){
+    if(currentView === 'day'){
+      const dateStr = selectedViewDate;
+      normalizeDay(dateStr);
+      const day = sessions[dateStr];
+      const totals = {};
+      day.blocks.forEach(b => b.slots.forEach(sl => {
+        const n = (sl.name||'').trim() || 'Untitled';
+        totals[n] = (totals[n] || 0) + dur(sl.startTime, sl.endTime);
+      }));
+      const subjects = Object.keys(totals);
+      const values = subjects.map(s => parseFloat(minToHours(totals[s])));
+      return {
+        type:'bar',
+        data:{
+          labels: subjects.length ? subjects : ['No data'],
+          datasets:[{
+            label:`Hours on ${dateStr}`,
+            data: values.length ? values : [0],
+            backgroundColor: subjects.map(s => colorFor(s, 0.75)),
+            borderColor: subjects.map(s => colorFor(s)),
+            borderWidth:1, borderRadius:8
+          }]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false} },
+          scales:{ y:{ beginAtZero:true, title:{display:true, text:'Hours'} },
+                   x:{ title:{display:true, text:'Subject'} } }
+        }
+      };
+    }
+
+    let dates = [];
+    if(currentView === 'week'){
+      const end = new Date(selectedViewDate);
+      for(let i=6;i>=0;i--){ const d = new Date(end); d.setDate(end.getDate()-i); dates.push(formatDate(d)); }
+    } else if(currentView === 'month'){
+      const end = new Date(selectedViewDate);
+      for(let i=29;i>=0;i--){ const d = new Date(end); d.setDate(end.getDate()-i); dates.push(formatDate(d)); }
+    } else {
+      const end = new Date(selectedViewDate);
+      const months = [];
+      for(let i=11;i>=0;i--) months.push(new Date(end.getFullYear(), end.getMonth()-i, 1));
+      const labels = months.map(d => d.toLocaleDateString(undefined,{month:'short', year:'2-digit'}));
+      const allSubjects = new Set();
+      months.forEach(m => {
+        const dim = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
+        for(let d=1; d<=dim; d++){
+          const ds = formatDate(new Date(m.getFullYear(), m.getMonth(), d));
+          normalizeDay(ds);
+          sessions[ds].blocks.forEach(b => b.slots.forEach(sl => allSubjects.add((sl.name||'').trim() || 'Untitled')));
+        }
+      });
+      const datasets = Array.from(allSubjects).map(subj => {
+        const data = months.map(m => {
+          const dim = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
+          let min = 0;
+          for(let d=1; d<=dim; d++){
+            const ds = formatDate(new Date(m.getFullYear(), m.getMonth(), d));
+            normalizeDay(ds);
+            sessions[ds].blocks.forEach(b => b.slots.forEach(sl => {
+              if(((sl.name||'').trim() || 'Untitled') === subj) min += dur(sl.startTime, sl.endTime);
+            }));
+          }
+          return parseFloat(minToHours(min));
+        });
+        return { label:subj, data, borderColor:colorFor(subj), backgroundColor:colorFor(subj,0.1),
+                 tension:0.2, pointRadius:3, borderWidth:2, fill:false };
+      });
+      if(datasets.length === 0) datasets.push({label:'No data', data:months.map(()=>0), borderColor:'#cbd5e1'});
+      return {
+        type:'line', data:{labels, datasets},
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{display:true, position:'bottom', labels:{boxWidth:12, font:{size:10}}}},
+          scales:{ y:{beginAtZero:true, title:{display:true, text:'Hours'}}, x:{title:{display:true,text:'Month'}}} }
+      };
+    }
+
+    const labels = dates.map(ds => {
+      const d = new Date(ds+'T00:00:00');
+      return currentView === 'week'
+        ? d.toLocaleDateString(undefined,{weekday:'short', month:'numeric', day:'numeric'})
+        : d.toLocaleDateString(undefined,{month:'short', day:'numeric'});
+    });
+
+    const allSubjects = new Set();
+    dates.forEach(ds => {
+      normalizeDay(ds);
+      sessions[ds].blocks.forEach(b => b.slots.forEach(sl => allSubjects.add((sl.name||'').trim() || 'Untitled')));
+    });
+    const datasets = Array.from(allSubjects).map(subj => {
+      const data = dates.map(ds => {
+        normalizeDay(ds);
+        let min = 0;
+        sessions[ds].blocks.forEach(b => b.slots.forEach(sl => {
+          if(((sl.name||'').trim() || 'Untitled') === subj) min += dur(sl.startTime, sl.endTime);
+        }));
+        return parseFloat(minToHours(min));
+      });
+      return { label:subj, data, borderColor:colorFor(subj), backgroundColor:colorFor(subj,0.1),
+               tension:0.2, pointRadius:4, borderWidth:2, fill:false };
+    });
+    if(datasets.length === 0) datasets.push({label:'No data', data:dates.map(()=>0), borderColor:'#cbd5e1'});
+    return {
+      type:'line', data:{labels, datasets},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:true, position:'bottom', labels:{boxWidth:12, font:{size:10}}}},
+        scales:{ y:{beginAtZero:true, title:{display:true, text:'Hours'}},
+                 x:{title:{display:true,text:'Date'}}} }
+    };
+  }
+
+  function refreshCharts(){
+    const cfg = buildChart();
+    if(chart) chart.destroy();
+    chart = new Chart(ctx, cfg);
+    renderLegend();
+    updateStats();
+  }
+
+  function renderLegend(){
+    legendList.innerHTML = '';
+    const all = new Set();
+    Object.keys(sessions).forEach(ds => {
+      normalizeDay(ds);
+      sessions[ds].blocks.forEach(b => b.slots.forEach(sl => all.add((sl.name||'').trim() || 'Untitled')));
+    });
+    if(all.size === 0){
+      legendList.innerHTML = '<span class="muted" style="font-size:0.72rem;">No subjects logged yet.</span>';
+      return;
+    }
+    Array.from(all).forEach(subj => {
+      const el = document.createElement('div');
+      el.className = 'legend-item';
+      el.innerHTML = `<span class="legend-swatch" style="background:${colorFor(subj)}"></span>${subj}`;
+      legendList.appendChild(el);
+    });
+  }
+
+  function updateStats(){
+    let totalMin = 0;
+    const subjSet = new Set();
+    let daysWithData = 0;
+    Object.keys(sessions).forEach(ds => {
+      normalizeDay(ds);
+      let dayMin = 0;
+      sessions[ds].blocks.forEach(b => b.slots.forEach(sl => {
+        const m = dur(sl.startTime, sl.endTime);
+        if(m>0){
+          totalMin += m; dayMin += m;
+          subjSet.add((sl.name||'').trim() || 'Untitled');
+        }
+      }));
+      if(dayMin > 0) daysWithData++;
+    });
+    statTotalHours.textContent = (totalMin/60).toFixed(1) + 'h';
+    statSubjects.textContent = subjSet.size;
+    statDays.textContent = daysWithData;
+    statAvgPerDay.textContent = daysWithData ? ((totalMin/60)/daysWithData).toFixed(1) + 'h' : '0h';
+  }
+
+  function renderRangePicker(){
+    if(currentView === 'day'){
+      rangePickerRow.innerHTML = `<label style="font-size:0.82rem;">Select date:</label>
+        <input type="date" id="viewDatePicker" value="${selectedViewDate}">`;
+      $('viewDatePicker').onchange = e => { selectedViewDate = e.target.value; refreshCharts(); };
+    } else if(currentView === 'week'){
+      rangePickerRow.innerHTML = `<label style="font-size:0.82rem;">Week ending:</label>
+        <input type="date" id="viewWeekAnchor" value="${selectedViewDate}">
+        <span class="muted" style="font-size:0.75rem;">(last 7 days)</span>`;
+      $('viewWeekAnchor').onchange = e => { selectedViewDate = e.target.value; refreshCharts(); };
+    } else if(currentView === 'month'){
+      rangePickerRow.innerHTML = `<label style="font-size:0.82rem;">Month ending:</label>
+        <input type="date" id="viewMonthAnchor" value="${selectedViewDate}">
+        <span class="muted" style="font-size:0.75rem;">(last 30 days)</span>`;
+      $('viewMonthAnchor').onchange = e => { selectedViewDate = e.target.value; refreshCharts(); };
+    } else {
+      rangePickerRow.innerHTML = `<label style="font-size:0.82rem;">Year ending:</label>
+        <input type="date" id="viewYearAnchor" value="${selectedViewDate}">
+        <span class="muted" style="font-size:0.75rem;">(last 12 months)</span>`;
+      $('viewYearAnchor').onchange = e => { selectedViewDate = e.target.value; refreshCharts(); };
+    }
+  }
+
+  function refreshAll(){
+    refreshCharts();
+    renderPie(selectedSessionDate);
+  }
+
+  // ============================================================
+  // PIE CHART
+  // ============================================================
+  const pieDatePicker = $('pieDatePicker');
+  const pieCtx = $('routinePieChart').getContext('2d');
+  const pieLegendEl = $('pieLegend');
+  let pieChart = null;
+  let pieView = 'day';
+
+  document.getElementById('pieViewTabs').addEventListener('click', e => {
+    const tab = e.target.closest('.view-tab');
+    if (!tab) return;
+    document.querySelectorAll('#pieViewTabs .view-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    pieView = tab.dataset.pieView;
+    renderPie(pieDatePicker.value);
+  });
+
+  function getPieDates(anchorDateStr){
+    const anchor = new Date(anchorDateStr + 'T00:00:00');
+    const dates = [];
+    if (pieView === 'day'){
+      dates.push(anchorDateStr);
+    } else if (pieView === 'week'){
+      for (let i = 6; i >= 0; i--){
+        const d = new Date(anchor); d.setDate(anchor.getDate() - i);
+        dates.push(formatDate(d));
+      }
+    } else if (pieView === 'month'){
+      for (let i = 29; i >= 0; i--){
+        const d = new Date(anchor); d.setDate(anchor.getDate() - i);
+        dates.push(formatDate(d));
+      }
+    } else {
+      for (let i = 11; i >= 0; i--){
+        const m = new Date(anchor.getFullYear(), anchor.getMonth() - i, 1);
+        const dim = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
+        for (let d = 1; d <= dim; d++){
+          dates.push(formatDate(new Date(m.getFullYear(), m.getMonth(), d)));
+        }
+      }
+    }
+    return dates;
+  }
+
+  function aggregateBlocksByPeriod(dates){
+    const blockMap = {};
+    dates.forEach(ds => {
+      const weekday = getWeekdayName(ds);
+      const dayBlocks = routine[weekday] || [];
+      const sess = sessions[ds];
+      const loggedBlocks = (sess && sess.blocks) ? sess.blocks : [];
+
+      dayBlocks.forEach(blk => {
+        const blockMin = dur(blk.startTime, blk.endTime);
+        if (blockMin <= 0) return;
+
+        if (!blockMap[blk.name]) {
+          blockMap[blk.name] = { name: blk.name, assignedMin: 0, subjectMin: {} };
+        }
+        blockMap[blk.name].assignedMin += blockMin;
+
+        const logged = loggedBlocks.find(lb => lb.name === blk.name);
+        if (logged && Array.isArray(logged.slots)) {
+          let usedThisBlock = 0;
+          logged.slots.forEach(sl => {
+            const m = dur(sl.startTime, sl.endTime);
+            if (m <= 0) return;
+            const subj = (sl.name || '').trim() || 'Untitled';
+            const remaining = blockMin - usedThisBlock;
+            const add = Math.min(m, remaining);
+            if (add > 0) {
+              blockMap[blk.name].subjectMin[subj] = (blockMap[blk.name].subjectMin[subj] || 0) + add;
+              usedThisBlock += add;
+            }
+          });
+        }
+      });
+    });
+    return blockMap;
+  }
+
+  function renderPie(dateStr){
+    const dates = getPieDates(dateStr);
+    const blockMap = aggregateBlocksByPeriod(dates);
+    const blockNames = Object.keys(blockMap);
+
+    const outerLabels = [], outerValues = [], outerColors = [];
+    const innerLabels = [], innerValues = [], innerColors = [];
+    const legend = [];
+
+    blockNames.forEach(bName => {
+      const b = blockMap[bName];
+      if (b.assignedMin <= 0) return;
+
+      outerLabels.push(b.name);
+      outerValues.push(+(b.assignedMin / 60).toFixed(2));
+      outerColors.push(colorFor(b.name));
+
+      let usedMin = 0;
+      Object.keys(b.subjectMin).forEach(subj => {
+        const m = b.subjectMin[subj];
+        usedMin += m;
+        innerLabels.push(`${b.name} · ${subj}`);
+        innerValues.push(+(m / 60).toFixed(2));
+        innerColors.push(colorFor(subj));
+      });
+
+      const unusedMin = Math.max(0, b.assignedMin - usedMin);
+      if (unusedMin > 0) {
+        innerLabels.push(`${b.name} · (unused)`);
+        innerValues.push(+(unusedMin / 60).toFixed(2));
+        innerColors.push(colorFor(b.name, 1, true));
+      }
+
+      legend.push({
+        block: b.name,
+        assignedMin: b.assignedMin,
+        usedMin,
+        unusedMin,
+        subjectMin: b.subjectMin
+      });
+    });
+
+    if (pieChart) pieChart.destroy();
+
+    if (outerValues.length === 0){
+      pieLegendEl.innerHTML = '<em class="muted">No routine blocks in this period.</em>';
+      return;
+    }
+
+    const order = outerValues.map((v,i)=>i).sort((a,b)=>outerValues[b]-outerValues[a]);
+    const oL = order.map(i => outerLabels[i]);
+    const oV = order.map(i => outerValues[i]);
+    const oC = order.map(i => outerColors[i]);
+
+    pieChart = new Chart(pieCtx, {
+      type: 'doughnut',
+      data: {
+        labels: innerLabels,
+        datasets: [
+          {
+            label: 'Actual work',
+            data: innerValues,
+            backgroundColor: innerColors,
+            borderColor: '#ffffff',
+            borderWidth: 1.5,
+            weight: 0.7
+          },
+          {
+            label: 'Routine blocks',
+            data: oV,
+            backgroundColor: oC,
+            borderColor: '#ffffff',
+            borderWidth: 3,
+            weight: 1.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '38%',
+        layout: { padding: { top: 40, bottom: 40, left: 50, right: 50 } },
+        animation: { duration: 400 },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => {
+                const v = c.raw;
+                const total = c.dataset.data.reduce((a,b)=>a+b,0);
+                const pct = total ? ((v/total)*100).toFixed(1) : 0;
+                return `${c.label}: ${v.toFixed(2)}h (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    pieChart.__labelLookup = {
+      0: innerLabels,
+      1: oL
+    };
+
+    // Draw labels after initial render + after animation
+    pieChart.options.animation.onComplete = () => drawCurvedLabels(pieChart);
+    drawCurvedLabels(pieChart);
+
+    pieLegendEl.innerHTML = legend.map(g => {
+      const totalH = (g.assignedMin/60).toFixed(2);
+      const pct = g.assignedMin ? Math.round((g.usedMin/g.assignedMin)*100) : 0;
+      const subjLines = Object.entries(g.subjectMin)
+        .map(([s,m]) => `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;">
+            <span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${colorFor(s)};"></span>
+            ${s}: ${(m/60).toFixed(2)}h
+          </span>`).join('');
+      return `
+        <div style="margin-bottom:0.5rem;">
+          <div style="display:flex;align-items:center;gap:6px;font-weight:600;">
+            <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${colorFor(g.block)};border:2px solid #0f172a22;"></span>
+            ${g.block} — ${totalH}h assigned · ${pct}% used
+          </div>
+          <div style="font-size:0.75rem; color:#475569; padding-left:1.2rem;">
+            ${subjLines || '<em>(nothing logged)</em>'}
+            ${g.unusedMin > 0 ? `<span style="color:#94a3b8;">· unused ${(g.unusedMin/60).toFixed(2)}h</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ---- Curved text: draws characters one by one along the arc ----
+  // measureText-based helper: draws a string centered at (centerAngle)
+  // along a circle of radius r, with the mid-angle as center.
+  function drawTextOnArc(ctx, text, centerAngle, radius, cx, cy, options){
+    // options: { fontSize, fontWeight, color, flip }
+    const flip = options.flip;
+    const fontStr = (options.fontWeight || '600') + ' ' + options.fontSize + 'px Segoe UI, Roboto, sans-serif';
+    ctx.font = fontStr;
+
+    // Measure each character width
+    const widths = [];
+    let totalW = 0;
+    for (const ch of text) {
+      const w = ctx.measureText(ch).width;
+      widths.push(w);
+      totalW += w;
+    }
+
+    // Angular width per pixel based on radius
+    // Small angle approximation: angle = arc length / radius
+    const startOffset = -totalW / 2;
+    let posOnArc = startOffset;
+
+    for (let i = 0; i < text.length; i++){
+      const ch = text[i];
+      const w = widths[i];
+      const midOffset = posOnArc + w / 2;
+      // angle at which this character's center sits
+      let angle = centerAngle + (midOffset / radius);
+      // If flipped (left half), invert direction & angle
+      if (flip) {
+        angle = centerAngle - (midOffset / radius);
+      }
+
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius;
+
+      ctx.save();
+      ctx.translate(x, y);
+      // rotate so the character is perpendicular to the arc (text baseline tangent)
+      let rot = angle + Math.PI/2;
+      if (flip) rot = angle - Math.PI/2;
+      ctx.rotate(rot);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = options.color || '#0f172a';
+      ctx.font = fontStr;
+      ctx.fillText(ch, 0, 0);
+      ctx.restore();
+
+      posOnArc += w;
+    }
+  }
+
+  // Decide the usable angular width a slice can display
+  function drawCurvedLabels(chartInstance){
+    if (!chartInstance || !chartInstance.ctx) return;
+    const c = chartInstance.ctx;
+    const area = chartInstance.chartArea;
+    const cx = (area.left + area.right) / 2;
+    const cy = (area.top + area.bottom) / 2;
+
+    // Clear any existing overlay by using a separate pass
+    chartInstance.data.datasets.forEach((ds, dsIdx) => {
+      const meta = chartInstance.getDatasetMeta(dsIdx);
+      const isOuter = (dsIdx === 1);
+      const labelArr = (chartInstance.__labelLookup && chartInstance.__labelLookup[dsIdx]) || chartInstance.data.labels;
+
+      meta.data.forEach((arc, i) => {
+        const value = ds.data[i];
+        const total = ds.data.reduce((a,b)=>a+b,0);
+        if (!total) return;
+        const pct = (value / total) * 100;
+
+        // Only draw labels for slices large enough
+        const minPct = isOuter ? 8 : 10;
+        if (pct < minPct) return;
+
+        const startAngle = arc.startAngle;
+        const endAngle = arc.endAngle;
+        const midAngle = (startAngle + endAngle) / 2;
+        const arcSpan = endAngle - startAngle;
+
+        // Choose the ring band radius (between inner & outer of this slice)
+        const rInner = arc.innerRadius;
+        const rOuter = arc.outerRadius;
+        const ringRadius = (rInner + rOuter) / 2;
+
+        // Slice flip? (left half → flip to keep text upright)
+        const flip = Math.cos(midAngle) < 0;
+
+        // Compute usable arc length in px
+        const usableArcPx = arcSpan * ringRadius;
+        // Reserve margins
+        const maxTextPx = usableArcPx - 14;
+
+        // Build text
+        const fullLabel = labelArr[i] || '';
+        const hoursPart = isOuter ? `${value.toFixed(1)}h (${pct.toFixed(0)}%)` : `${value.toFixed(1)}h`;
+
+        // Try to fit `label + hours` on one line, else two lines
+        const fontBig = isOuter ? 11 : 10;
+        const fontSmall = isOuter ? 10 : 9;
+
+        // Fit label to available arc
+        c.font = (isOuter ? '700 ' : '600 ') + fontBig + 'px Segoe UI, Roboto, sans-serif';
+        let labelText = fullLabel;
+        // Truncate
+        while (labelText.length > 1 && c.measureText(labelText).width > maxTextPx){
+          labelText = labelText.slice(0, -1);
+          if (!labelText.endsWith('…')) labelText = labelText.slice(0, -1) + '…';
+        }
+        const labelPx = c.measureText(labelText).width;
+
+        // If we can fit two lines (label + hours)
+        const twoLine = (labelPx + 6) <= maxTextPx;
+
+        if (twoLine){
+          // Label on outer radius, hours on inner radius
+          const rLabel = ringRadius + (isOuter ? 2 : 0);
+          const rHours = ringRadius - (isOuter ? 11 : 10);
+
+          // Draw label
+          drawTextOnArc(c, labelText, midAngle, rLabel, cx, cy, {
+            fontSize: fontBig,
+            fontWeight: isOuter ? '700' : '600',
+            color: '#0f172a',
+            flip: flip
+          });
+          // Draw hours
+          drawTextOnArc(c, hoursPart, midAngle, rHours, cx, cy, {
+            fontSize: fontSmall,
+            fontWeight: '600',
+            color: '#334155',
+            flip: flip
+          });
+        } else {
+          // Just label (truncated), skip hours
+          drawTextOnArc(c, labelText, midAngle, ringRadius, cx, cy, {
+            fontSize: fontBig,
+            fontWeight: isOuter ? '700' : '600',
+            color: '#0f172a',
+            flip: flip
+          });
+        }
+      });
+    });
+  }
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  function init(){
+    load();
+    const today = new Date().toISOString().slice(0,10);
+    selectedSessionDate = today; selectedViewDate = today;
+    sessionDatePicker.value = today;
+    selectedRoutineDay = getWeekdayName(today);
+    selectedDayNameSpan.textContent = selectedRoutineDay;
+    $('todayDisplay').textContent = new Date().toLocaleDateString(undefined,
+      {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    renderWeekGrid();
+    renderRoutineEditor();
+    renderSessionLog(today);
+    renderRangePicker();
+    refreshCharts();
+    pieDatePicker.value = today;
+    renderPie(today);
+  }
+
+  addRoutineItemBtn.onclick = () => {
+    routine[selectedRoutineDay].push({ id: uid('r_'), name: 'New block', startTime:'09:00', endTime:'10:00' });
+    renderRoutineEditor(); renderWeekGrid();
+  };
+  saveRoutineBtn.onclick = () => {
+    const items = routineEditor.querySelectorAll('.routine-item');
+    const list = routine[selectedRoutineDay];
+    items.forEach((item, i) => {
+      const name = item.querySelector('input[data-field="name"]');
+      const st = item.querySelector('input[data-field="startTime"]');
+      const en = item.querySelector('input[data-field="endTime"]');
+      if(list[i]){
+        list[i].name = (name.value || '').trim() || 'Block';
+        list[i].startTime = st.value; list[i].endTime = en.value;
+      }
+    });
+    saveRoutine();
+    routineStatus.textContent = '✓ Saved!';
+    setTimeout(()=>routineStatus.textContent='',2000);
+    renderWeekGrid();
+    refreshAll();
+  };
+
+  sessionDatePicker.onchange = e => { selectedSessionDate = e.target.value; renderSessionLog(selectedSessionDate); renderPie(selectedSessionDate); };
+  loadSessionsBtn.onclick = () => { selectedSessionDate = sessionDatePicker.value; renderSessionLog(selectedSessionDate); renderPie(selectedSessionDate); };
+  resetToRoutineBtn.onclick = () => {
+    if(!confirm('Recreate this day\'s blocks from the assigned routine? Current edits for this day will be lost.')) return;
+    applyRoutineToDate(selectedSessionDate);
+  };
+  saveSessionsBtn.onclick = () => {
+    saveSessions();
+    sessionStatus.textContent = '✓ Saved!';
+    setTimeout(()=>sessionStatus.textContent='',2000);
+    refreshAll();
+  };
+
+  viewTabs.onclick = e => {
+    const tab = e.target.closest('.view-tab'); if(!tab) return;
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentView = tab.dataset.view;
+    renderRangePicker(); refreshCharts();
+  };
+
+  pieDatePicker.addEventListener('change', e => renderPie(e.target.value));
+
+  init();
+
+  window.addEventListener('resize', () => {
+    if(pieChart) setTimeout(() => drawCurvedLabels(pieChart), 60);
+  });
+})();
+</script>
+
+<script>
+(function(){
+  const DB_NAME = 'studyTrackerDB';
+  const STORE   = 'pdfs';
+  const PDF_KEY = 'routiner';
+
+  const uploadInput  = document.getElementById('pdfUploadInput');
+  const saveBtn      = document.getElementById('pdfSaveBtn');
+  const removeBtn    = document.getElementById('pdfRemoveBtn');
+  const statusEl     = document.getElementById('pdfStatus');
+  const viewerWrap   = document.getElementById('pdfViewerWrap');
+  const viewer       = document.getElementById('pdfViewer');
+  const emptyHint    = document.getElementById('pdfEmptyHint');
+  const fileNameEl   = document.getElementById('pdfFileName');
+  const downloadLink = document.getElementById('pdfDownloadLink');
+
+  let pendingBlob = null;
+  let currentUrl  = null;
+
+  function openDB(){
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      };
+      req.onsuccess = () => res(req.result);
+      req.onerror   = () => rej(req.error);
+    });
+  }
+  async function dbPut(key, value){
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(value, key);
+      tx.oncomplete = () => res();
+      tx.onerror    = () => rej(tx.error);
+    });
+  }
+  async function dbGet(key){
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const r = tx.objectStore(STORE).get(key);
+      r.onsuccess = () => res(r.result);
+      r.onerror   = () => rej(r.error);
+    });
+  }
+  async function dbDelete(key){
+    const db = await openDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(key);
+      tx.oncomplete = () => res();
+      tx.onerror    = () => rej(tx.error);
+    });
+  }
+
+  function showPDF(blob, name){
+    if(currentUrl) URL.revokeObjectURL(currentUrl);
+    currentUrl = URL.createObjectURL(blob);
+    viewer.src = currentUrl;
+    downloadLink.href = currentUrl;
+    downloadLink.download = name || 'routiner.pdf';
+    fileNameEl.textContent = name || 'routiner.pdf';
+    viewerWrap.style.display = 'block';
+    emptyHint.style.display = 'none';
+  }
+  function hidePDF(){
+    if(currentUrl){ URL.revokeObjectURL(currentUrl); currentUrl = null; }
+    viewer.src = '';
+    viewerWrap.style.display = 'none';
+    emptyHint.style.display = 'block';
+    fileNameEl.textContent = '';
+  }
+
+  uploadInput.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    if(f.type !== 'application/pdf'){
+      statusEl.textContent = '❌ Not a PDF'; statusEl.style.color = '#ef4444';
+      return;
+    }
+    pendingBlob = f;
+    statusEl.textContent = 'Ready — click "Save PDF"';
+    statusEl.style.color = '#2563eb';
+  });
+
+  saveBtn.addEventListener('click', async () => {
+    if(!pendingBlob){
+      statusEl.textContent = '❗ Choose a PDF file first'; statusEl.style.color = '#ef4444';
+      return;
+    }
+    try {
+      await dbPut(PDF_KEY, { blob: pendingBlob, name: pendingBlob.name, savedAt: Date.now() });
+      showPDF(pendingBlob, pendingBlob.name);
+      statusEl.textContent = '✓ PDF saved permanently'; statusEl.style.color = '#16a34a';
+      pendingBlob = null; uploadInput.value = '';
+      setTimeout(()=>statusEl.textContent='', 2500);
+    } catch(err){
+      console.error(err);
+      statusEl.textContent = '❌ Save failed (file too large?)'; statusEl.style.color = '#ef4444';
+    }
+  });
+
+  removeBtn.addEventListener('click', async () => {
+    if(!confirm('Remove the saved Routiner PDF?')) return;
+    try {
+      await dbDelete(PDF_KEY);
+      hidePDF();
+      statusEl.textContent = '✓ Removed'; statusEl.style.color = '#16a34a';
+      setTimeout(()=>statusEl.textContent='', 2000);
+    } catch(err){ console.error(err); }
+  });
+
+  (async () => {
+    try {
+      const rec = await dbGet(PDF_KEY);
+      if(rec && rec.blob) showPDF(rec.blob, rec.name);
+    } catch(err){ console.warn('No saved PDF or IndexedDB unavailable', err); }
+  })();
+})();
+</script>
+</body>
+</html>
